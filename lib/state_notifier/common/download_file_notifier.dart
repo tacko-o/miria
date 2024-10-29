@@ -26,7 +26,7 @@ class DownloadFileNotifier extends _$DownloadFileNotifier {
       final androidInfo = await DeviceInfoPlugin().androidInfo;
       if (androidInfo.version.sdkInt <= 32) {
         final permissionStatus = await Permission.storage.status;
-        if (permissionStatus.isDenied) {
+        if (!permissionStatus.isGranted) {
           final p = await Permission.storage.request();
           if (!p.isGranted) {
             return DownloadFileResult.permissionDenied;
@@ -34,7 +34,7 @@ class DownloadFileNotifier extends _$DownloadFileNotifier {
         }
       } else {
         final permissionStatus = await Permission.photos.status;
-        if (permissionStatus.isDenied) {
+        if (!permissionStatus.isGranted) {
           final p = await Permission.photos.request();
           if (!p.isGranted) {
             return DownloadFileResult.permissionDenied;
