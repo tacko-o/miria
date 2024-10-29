@@ -11,6 +11,7 @@ import "package:miria/state_notifier/note_file_dialog/image_viewer_info_notifier
 import "package:miria/view/common/note_file_dialog/image_viewer.dart";
 import "package:miria/view/common/note_file_dialog/media_viewer.dart";
 import "package:miria/view/common/note_file_dialog/unsupported_note_file.dart";
+import "package:miria/view/dialogs/simple_message_dialog.dart";
 import "package:misskey_dart/misskey_dart.dart";
 
 class NoteFileDialog extends HookConsumerWidget {
@@ -165,10 +166,20 @@ class NoteFileDialog extends HookConsumerWidget {
                             final page = pageController.page?.toInt();
                             if (page == null) return;
                             final driveFile = driveFiles[page];
-                            await ref
+                            final f = await ref
                                 .read(downloadFileNotifierProvider.notifier)
                                 .downloadFile(driveFile);
                             if (!context.mounted) return;
+                            if (f != DownloadFileResult.succeeded) {
+                              await showDialog(
+                                context: context,
+                                builder: (context) => SimpleMessageDialog(
+                                  message:
+                                      "${S.of(context).failedFileSave}\n[$f]",
+                                ),
+                              );
+                              return;
+                            }
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
