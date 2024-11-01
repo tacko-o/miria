@@ -65,11 +65,16 @@ class NetworkImageView extends ConsumerWidget {
               alignment: Alignment.center,
               children: [
                 Container(
-                  color: Colors.grey,
+                  color: const Color.fromARGB(255, 224, 224, 224),
                 ),
-                Icon(
-                  Icons.image_not_supported_outlined,
-                  color: Colors.grey.shade800,
+                SvgPicture.asset(
+                  "assets/images/miria_error.svg",
+                  colorFilter: const ColorFilter.mode(
+                    Color.fromARGB(255, 117, 117, 117),
+                    BlendMode.srcIn,
+                  ),
+                  width: 48,
+                  height: 48,
                 ),
               ],
             ),
