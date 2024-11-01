@@ -61,7 +61,18 @@ class NetworkImageView extends ConsumerWidget {
         fit: fit,
         errorWidget: (context, url, error) =>
             errorBuilder?.call(context, error, StackTrace.current) ??
-            const Icon(Icons.image_not_supported_outlined),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  color: Colors.grey,
+                ),
+                Icon(
+                  Icons.image_not_supported_outlined,
+                  color: Colors.grey.shade800,
+                ),
+              ],
+            ),
         cacheManager: ref.read(cacheManagerProvider),
         width: width,
         height: height,
