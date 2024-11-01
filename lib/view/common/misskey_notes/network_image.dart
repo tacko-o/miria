@@ -1,5 +1,5 @@
 import "package:cached_network_image/cached_network_image.dart";
-import "package:flutter/cupertino.dart";
+import "package:flutter/material.dart";
 import "package:flutter_svg/flutter_svg.dart";
 import "package:hooks_riverpod/hooks_riverpod.dart";
 import "package:miria/providers.dart";
@@ -61,7 +61,7 @@ class NetworkImageView extends ConsumerWidget {
         fit: fit,
         errorWidget: (context, url, error) =>
             errorBuilder?.call(context, error, StackTrace.current) ??
-            Container(),
+            const Icon(Icons.image_not_supported_outlined),
         cacheManager: ref.read(cacheManagerProvider),
         width: width,
         height: height,
