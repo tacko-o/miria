@@ -592,6 +592,8 @@ class NoteCreateNotifier extends _$NoteCreateNotifier {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.image,
         allowMultiple: true,
+        allowCompression: false,
+        compressionQuality: 0,
       );
       if (result == null || result.files.isEmpty) return;
 
