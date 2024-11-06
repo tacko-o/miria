@@ -61,23 +61,28 @@ class NetworkImageView extends ConsumerWidget {
         fit: fit,
         errorWidget: (context, url, error) =>
             errorBuilder?.call(context, error, StackTrace.current) ??
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  color: const Color.fromARGB(255, 224, 224, 224),
-                ),
-                SvgPicture.asset(
-                  "assets/images/miria_error.svg",
-                  colorFilter: const ColorFilter.mode(
-                    Color.fromARGB(255, 117, 117, 117),
-                    BlendMode.srcIn,
-                  ),
-                  width: 48,
-                  height: 48,
-                ),
-              ],
-            ),
+              Container(
+                alignment: Alignment.center,
+                decoration: type == ImageType.avatarDecoration
+                ? null  
+                : BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    color: const Color.fromARGB(255, 224, 224, 224),
+                  )
+                ,
+                child: type == ImageType.avatarDecoration
+                ? null
+                : SvgPicture.asset(
+                    "assets/images/miria_error.svg",
+                    colorFilter: const ColorFilter.mode(
+                      Color.fromARGB(255, 117, 117, 117),
+                      BlendMode.srcIn,
+                    ),
+                    width: 48,
+                    height: 48,
+                  )
+                ,
+              ),
         cacheManager: ref.read(cacheManagerProvider),
         width: width,
         height: height,
