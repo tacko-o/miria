@@ -108,9 +108,9 @@
     "confirmCreateBlock": "ブロックなさりますの？",
 
     "unsupportedFile": "対応してないファイルのようですわ",
-    "failedFileSave": "ファイルの保存に失敗したようですわね…"
+    "failedFileSave": "ファイルの保存に失敗したようですわね…",
 
-
+    "nothingHere": "ここには何もありませんわ"
 
 
 

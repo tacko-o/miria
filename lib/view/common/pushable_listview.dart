@@ -2,6 +2,7 @@ import "dart:async";
 
 import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
+import "package:flutter_gen/gen_l10n/app_localizations.dart";
 import "package:flutter_hooks/flutter_hooks.dart";
 import "package:hooks_riverpod/hooks_riverpod.dart";
 import "package:miria/model/general_settings.dart";
@@ -119,10 +120,10 @@ class PushableListView<T> extends HookConsumerWidget {
             }
 
             if (items.value.isEmpty && !hideIsEmpty) {
-              return const Center(
+              return Center(
                 child: Padding(
-                  padding: EdgeInsets.all(10),
-                  child: Text("なんもないで"),
+                  padding: const EdgeInsets.all(10),
+                  child: Text(S.of(context).nothingHere),
                 ),
               );
             }

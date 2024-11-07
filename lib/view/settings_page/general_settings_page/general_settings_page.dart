@@ -178,9 +178,9 @@ class GeneralSettingsPage extends HookConsumerWidget {
                         onChanged: (value) async =>
                             automaticPush.value = value ?? AutomaticPush.none,
                       ),
-                      const Text("デッキモード"), //TODO: localize
+                      Text(S.of(context).deckMode),
                       CheckboxListTile(
-                        title: const Text("デッキモードにします。"),
+                        title: Text(S.of(context).enableDeckMode),
                         value: isDeckMode.value,
                         onChanged: (value) => isDeckMode.value = value ?? false,
                       ),
