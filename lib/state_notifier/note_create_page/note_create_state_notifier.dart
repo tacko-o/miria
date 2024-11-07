@@ -163,7 +163,7 @@ class NoteCreateNotifier extends _$NoteCreateNotifier {
             final file = _fileSystem.file(media);
             final fileName = file.basename;
             final extension = fileName.split(".").last.toLowerCase();
-            if (["jpg", "png", "gif", "webp"].contains(extension)) {
+            if (["jpg", "png", "gif", "webp", "heic"].contains(extension)) {
               return ImageFile(
                 data: await loadImage(file),
                 fileName: fileName,
@@ -615,7 +615,10 @@ class NoteCreateNotifier extends _$NoteCreateNotifier {
         ),
       );
 
-      state = state.copyWith(files: [...state.files, ...files]);
+      state = state.copyWith(files: [
+        ...state.files,
+        ...files.where((file) => file.data.isNotEmpty)
+      ]);
     }
   }
 
@@ -639,6 +642,8 @@ class NoteCreateNotifier extends _$NoteCreateNotifier {
       }
 
       return img;
+    } else if (mime == "image/heic") {
+      return Uint8List(0);
     }
     return imageBytes;
   }
