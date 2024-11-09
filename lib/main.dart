@@ -187,7 +187,8 @@ class MiriaWindowListener with WindowListener {
     } catch (e) {
       if (kDebugMode) print(e);
     } finally {
-      await windowManager.destroy();
+      await windowManager.setPreventClose(false);
+      await windowManager.close();
     }
   }
 }
