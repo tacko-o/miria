@@ -68,7 +68,7 @@ class VoteContentListItem extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final onVoteContentChange = ref.watch(
       noteCreateNotifierProvider
-          .select((notifier) => notifier.voteContent.length),
+          .select((notifier) => notifier.voteContentCount),
     );
 
     final initial = useMemoized(
@@ -78,26 +78,22 @@ class VoteContentListItem extends HookConsumerWidget {
     final controller = useTextEditingController(text: initial);
     useEffect(
       () {
-        controller.text = initial;
-        return null;
-      },
-      [initial],
-    );
-    useEffect(
-      () {
-        controller.addListener(() {
-          if (ref.read(noteCreateNotifierProvider).voteContent.length <=
-              index) {
-            return;
-          }
-          final notifier = ref.read(noteCreateNotifierProvider.notifier);
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            notifier.setVoteContent(index, controller.text);
+        controller
+          ..text = initial
+          ..addListener(() {
+            final voteContent =
+                ref.read(noteCreateNotifierProvider).voteContent;
+            if (voteContent.length <= index ||
+                voteContent[index] == controller.text) {
+              return;
+            }
+            ref
+                .read(noteCreateNotifierProvider.notifier)
+                .setVoteContent(index, controller.text);
           });
-        });
         return null;
       },
-      [index, initial],
+      [index, onVoteContentChange],
     );
     return Padding(
       padding: const EdgeInsets.only(bottom: 5),
