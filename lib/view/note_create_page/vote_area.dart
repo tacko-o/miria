@@ -90,13 +90,14 @@ class VoteContentListItem extends HookConsumerWidget {
               index) {
             return;
           }
-          ref
-              .read(noteCreateNotifierProvider.notifier)
-              .setVoteContent(index, controller.text);
+          final notifier = ref.read(noteCreateNotifierProvider.notifier);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifier.setVoteContent(index, controller.text);
+          });
         });
         return null;
       },
-      [index],
+      [index, initial],
     );
     return Padding(
       padding: const EdgeInsets.only(bottom: 5),
