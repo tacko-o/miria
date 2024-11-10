@@ -68,7 +68,8 @@ class GeneralSettingsPage extends HookConsumerWidget {
       enableLongTextElipsed.value,
       tabPosition.value,
       emojiType.value,
-      textScaleFactor.value,
+      // 変更ボタンを押すまで反映しない
+      // textScaleFactor.value,
       defaultFontName.value,
       serifFontName.value,
       monospaceFontName.value,
