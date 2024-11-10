@@ -107,7 +107,10 @@ class PushableListView<T> extends HookConsumerWidget {
               return const Center(
                 child: Padding(
                   padding: EdgeInsets.all(20),
-                  child: CircularProgressIndicator.adaptive(),
+                  child: SizedBox.square(
+                    dimension: 100,
+                    child: CircularProgressIndicator.adaptive(),
+                  ),
                 ),
               );
             }
