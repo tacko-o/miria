@@ -627,14 +627,14 @@ class NoteCreateNotifier extends _$NoteCreateNotifier {
     final mime = lookupMimeType(file.path, headerBytes: imageBytes);
     if (mime == "image/jpeg") {
       final origExif = decodeJpgExif(imageBytes);
-      final exif = ExifData();
-
-      if (origExif != null) {
-        final orientation = origExif.imageIfd["Orientation"];
-        if (orientation != null) {
-          exif.imageIfd["Orientation"] = orientation;
-        }
+      if (origExif == null || origExif.isEmpty) {
+        return imageBytes;
       }
+
+      final exif = ExifData();
+      exif.imageIfd.orientation = (origExif.imageIfd.hasOrientation)
+          ? origExif.imageIfd.orientation
+          : 1;
 
       final img = injectJpgExif(imageBytes, exif);
       if (img == null) {
