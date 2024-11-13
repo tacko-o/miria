@@ -159,13 +159,22 @@ class NoteCreateNotifier extends _$NoteCreateNotifier {
     }
     if (initialMediaFiles != null && initialMediaFiles.isNotEmpty) {
       resultState = resultState.copyWith(
-        files: await Future.wait(
+        files: (await Future.wait(
           initialMediaFiles.map((media) async {
             final file = _fileSystem.file(media);
             final fileName = file.basename;
             final extension = fileName.split(".").last.toLowerCase();
-            if (["jpg", "png", "gif", "webp", "heic"].contains(extension)) {
-              return await loadImage(file);
+            if (["jpg", "jpeg", "png", "gif", "webp", "heic", "tif", "tiff"]
+                .contains(extension)) {
+              final d = await loadImage(file);
+              if (d.data.isEmpty) {
+                await _dialogNotifier.showSimpleDialog(
+                  message: (context) =>
+                      S.of(context).unsupportedFileWithFilename(fileName),
+                );
+                return null;
+              }
+              return d;
             } else {
               return UnknownFile(
                 data: await file.readAsBytes(),
@@ -173,7 +182,9 @@ class NoteCreateNotifier extends _$NoteCreateNotifier {
               );
             }
           }),
-        ),
+        ))
+            .nonNulls
+            .toList(),
       );
     }
 
@@ -606,14 +617,26 @@ class NoteCreateNotifier extends _$NoteCreateNotifier {
       }).nonNulls;
       final files = await Future.wait(
         fsFiles.map(
-          (file) async => loadImage(file),
+          (file) async {
+            final d = await loadImage(file);
+            if (d.data.isEmpty) {
+              await _dialogNotifier.showSimpleDialog(
+                message: (context) =>
+                    S.of(context).unsupportedFileWithFilename(file.basename),
+              );
+              return null;
+            }
+            return d;
+          },
         ),
       );
 
-      state = state.copyWith(files: [
-        ...state.files,
-        ...files.where((file) => file.data.isNotEmpty)
-      ]);
+      state = state.copyWith(
+        files: [
+          ...state.files,
+          ...files.nonNulls,
+        ],
+      );
     }
   }
 
