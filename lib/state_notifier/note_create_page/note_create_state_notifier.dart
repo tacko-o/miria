@@ -2,6 +2,7 @@ import "dart:io";
 import "dart:typed_data";
 
 import "package:dio/dio.dart";
+import "package:file/file.dart";
 import "package:file_picker/file_picker.dart";
 import "package:flutter/material.dart";
 import "package:flutter_gen/gen_l10n/app_localizations.dart";
@@ -164,10 +165,7 @@ class NoteCreateNotifier extends _$NoteCreateNotifier {
             final fileName = file.basename;
             final extension = fileName.split(".").last.toLowerCase();
             if (["jpg", "png", "gif", "webp", "heic"].contains(extension)) {
-              return ImageFile(
-                data: await loadImage(file),
-                fileName: fileName,
-              );
+              return await loadImage(file);
             } else {
               return UnknownFile(
                 data: await file.readAsBytes(),
@@ -608,10 +606,7 @@ class NoteCreateNotifier extends _$NoteCreateNotifier {
       }).nonNulls;
       final files = await Future.wait(
         fsFiles.map(
-          (file) async => ImageFile(
-            data: await loadImage(file),
-            fileName: file.basename,
-          ),
+          (file) async => loadImage(file),
         ),
       );
 
@@ -622,30 +617,57 @@ class NoteCreateNotifier extends _$NoteCreateNotifier {
     }
   }
 
-  Future<Uint8List> loadImage(File file) async {
-    final imageBytes = await file.readAsBytes();
-    final mime = lookupMimeType(file.path, headerBytes: imageBytes);
-    if (mime == "image/jpeg") {
-      final origExif = decodeJpgExif(imageBytes);
-      if (origExif == null || origExif.isEmpty) {
-        return imageBytes;
+  Future<ImageFile> loadImage(File file) async {
+    try {
+      final imageBytes = await file.readAsBytes();
+      final mime = lookupMimeType(file.path, headerBytes: imageBytes);
+      var basename = file.basename;
+
+      switch (mime) {
+        case "image/jpeg":
+          if (!RegExp(r"\.jpe?g$", caseSensitive: false).hasMatch(basename)) {
+            basename = "$basename.jpg";
+          }
+
+          final origExif = decodeJpgExif(imageBytes);
+          if (origExif == null || origExif.isEmpty) {
+            return ImageFile(fileName: basename, data: imageBytes);
+          }
+
+          final exif = ExifData();
+          exif.imageIfd.orientation = (origExif.imageIfd.hasOrientation)
+              ? origExif.imageIfd.orientation
+              : 1;
+
+          return ImageFile(
+            fileName: basename,
+            data: injectJpgExif(imageBytes, exif) ?? Uint8List(0),
+          );
+
+        case "image/heic":
+          return ImageFile(
+            fileName: "$basename.jpg",
+            data: await FlutterImageCompress.compressWithList(
+              imageBytes,
+              quality: 95,
+              format: CompressFormat.jpeg,
+              keepExif: false,
+            ),
+          );
+
+        case "image/tiff":
+          final f = decodeTiff(imageBytes);
+          return ImageFile(
+            fileName: "$basename.jpg",
+            data: (f != null) ? encodeJpg(f, quality: 95) : Uint8List(0),
+          );
+
+        default:
+          return ImageFile(fileName: basename, data: imageBytes);
       }
-
-      final exif = ExifData();
-      exif.imageIfd.orientation = (origExif.imageIfd.hasOrientation)
-          ? origExif.imageIfd.orientation
-          : 1;
-
-      final img = injectJpgExif(imageBytes, exif);
-      if (img == null) {
-        return Uint8List(0);
-      }
-
-      return img;
-    } else if (mime == "image/heic") {
-      return Uint8List(0);
+    } catch (e) {
+      return ImageFile(fileName: file.basename, data: Uint8List(0));
     }
-    return imageBytes;
   }
 
   /// メディアの内容を変更する
