@@ -679,11 +679,19 @@ class NoteCreateNotifier extends _$NoteCreateNotifier {
           );
 
         case "image/tiff":
-          final f = decodeTiff(imageBytes);
+          final tiff = decodeTiff(imageBytes);
+          if (tiff == null) {
+            throw const FormatException("Decoded TIFF image is null");
+          }
+
+          final exif = ExifData();
+          if (tiff.exif.imageIfd.hasOrientation) {
+            exif.imageIfd.orientation = tiff.exif.imageIfd.orientation;
+          }
+          tiff.exif = exif;
+
           return ImageFile(
-            fileName: "$basename.jpg",
-            data: (f != null) ? encodeJpg(f, quality: 95) : Uint8List(0),
-          );
+              fileName: "$basename.jpg", data: encodeJpg(tiff, quality: 95));
 
         default:
           return ImageFile(fileName: basename, data: imageBytes);
