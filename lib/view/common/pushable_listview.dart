@@ -154,13 +154,12 @@ class PushableListView<T> extends HookConsumerWidget {
                           const SizedBox.shrink(),
                     ],
                   ),
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 10, bottom: 10),
-                    child: IconButton(
-                      onPressed: nextLoad,
-                      icon: const Icon(Icons.keyboard_arrow_down),
-                    ),
+                InkWell(
+                  onTap: nextLoad,
+                  child: Container(
+                    alignment: Alignment.center,
+                    height: 60,
+                    child: const Icon(Icons.keyboard_arrow_down),
                   ),
                 ),
               ],
