@@ -2,6 +2,7 @@ import "dart:io";
 import "dart:typed_data";
 
 import "package:dio/dio.dart";
+import "package:file/file.dart";
 import "package:file_picker/file_picker.dart";
 import "package:flutter/material.dart";
 import "package:flutter_gen/gen_l10n/app_localizations.dart";
@@ -158,16 +159,22 @@ class NoteCreateNotifier extends _$NoteCreateNotifier {
     }
     if (initialMediaFiles != null && initialMediaFiles.isNotEmpty) {
       resultState = resultState.copyWith(
-        files: await Future.wait(
+        files: (await Future.wait(
           initialMediaFiles.map((media) async {
             final file = _fileSystem.file(media);
             final fileName = file.basename;
             final extension = fileName.split(".").last.toLowerCase();
-            if (["jpg", "png", "gif", "webp", "heic"].contains(extension)) {
-              return ImageFile(
-                data: await loadImage(file),
-                fileName: fileName,
-              );
+            if (["jpg", "jpeg", "png", "gif", "webp", "heic", "tif", "tiff"]
+                .contains(extension)) {
+              final d = await loadImage(file);
+              if (d.data.isEmpty) {
+                await _dialogNotifier.showSimpleDialog(
+                  message: (context) =>
+                      S.of(context).unsupportedFileWithFilename(fileName),
+                );
+                return null;
+              }
+              return d;
             } else {
               return UnknownFile(
                 data: await file.readAsBytes(),
@@ -175,7 +182,9 @@ class NoteCreateNotifier extends _$NoteCreateNotifier {
               );
             }
           }),
-        ),
+        ))
+            .nonNulls
+            .toList(),
       );
     }
 
@@ -608,44 +617,88 @@ class NoteCreateNotifier extends _$NoteCreateNotifier {
       }).nonNulls;
       final files = await Future.wait(
         fsFiles.map(
-          (file) async => ImageFile(
-            data: await loadImage(file),
-            fileName: file.basename,
-          ),
+          (file) async {
+            final d = await loadImage(file);
+            if (d.data.isEmpty) {
+              await _dialogNotifier.showSimpleDialog(
+                message: (context) =>
+                    S.of(context).unsupportedFileWithFilename(file.basename),
+              );
+              return null;
+            }
+            return d;
+          },
         ),
       );
 
-      state = state.copyWith(files: [
-        ...state.files,
-        ...files.where((file) => file.data.isNotEmpty)
-      ]);
+      state = state.copyWith(
+        files: [
+          ...state.files,
+          ...files.nonNulls,
+        ],
+      );
     }
   }
 
-  Future<Uint8List> loadImage(File file) async {
-    final imageBytes = await file.readAsBytes();
-    final mime = lookupMimeType(file.path, headerBytes: imageBytes);
-    if (mime == "image/jpeg") {
-      final origExif = decodeJpgExif(imageBytes);
-      final exif = ExifData();
+  Future<ImageFile> loadImage(File file) async {
+    try {
+      final imageBytes = await file.readAsBytes();
+      final mime = lookupMimeType(file.path, headerBytes: imageBytes);
+      var basename = file.basename;
 
-      if (origExif != null) {
-        final orientation = origExif.imageIfd["Orientation"];
-        if (orientation != null) {
-          exif.imageIfd["Orientation"] = orientation;
-        }
+      switch (mime) {
+        case "image/jpeg":
+          if (!RegExp(r"\.jpe?g$", caseSensitive: false).hasMatch(basename)) {
+            basename = "$basename.jpg";
+          }
+
+          final origExif = decodeJpgExif(imageBytes);
+          if (origExif == null || origExif.isEmpty) {
+            return ImageFile(fileName: basename, data: imageBytes);
+          }
+
+          final exif = ExifData();
+          exif.imageIfd.orientation = (origExif.imageIfd.hasOrientation)
+              ? origExif.imageIfd.orientation
+              : 1;
+
+          return ImageFile(
+            fileName: basename,
+            data: injectJpgExif(imageBytes, exif) ?? Uint8List(0),
+          );
+
+        case "image/heic":
+          return ImageFile(
+            fileName: "$basename.jpg",
+            data: await FlutterImageCompress.compressWithList(
+              imageBytes,
+              quality: 95,
+              format: CompressFormat.jpeg,
+              keepExif: false,
+            ),
+          );
+
+        case "image/tiff":
+          final tiff = decodeTiff(imageBytes);
+          if (tiff == null) {
+            throw const FormatException("Decoded TIFF image is null");
+          }
+
+          final exif = ExifData();
+          if (tiff.exif.imageIfd.hasOrientation) {
+            exif.imageIfd.orientation = tiff.exif.imageIfd.orientation;
+          }
+          tiff.exif = exif;
+
+          return ImageFile(
+              fileName: "$basename.jpg", data: encodeJpg(tiff, quality: 95));
+
+        default:
+          return ImageFile(fileName: basename, data: imageBytes);
       }
-
-      final img = injectJpgExif(imageBytes, exif);
-      if (img == null) {
-        return Uint8List(0);
-      }
-
-      return img;
-    } else if (mime == "image/heic") {
-      return Uint8List(0);
+    } catch (e) {
+      return ImageFile(fileName: file.basename, data: Uint8List(0));
     }
-    return imageBytes;
   }
 
   /// メディアの内容を変更する
