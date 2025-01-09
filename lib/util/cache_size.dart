@@ -59,7 +59,7 @@ Future<String> clearCache() async {
 /// ファイルを削除する
 Future<void> deleteFile(FileSystemEntity file) async {
   if (file is File) {
-    // ファイならそのまま削除
+    // ファイルならそのまま削除
     file.deleteSync();
   } else if (file is Directory) {
     // ディレクトリなら配下のファイルを再起的に削除
