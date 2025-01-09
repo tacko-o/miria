@@ -9,6 +9,7 @@ import "package:hooks_riverpod/hooks_riverpod.dart";
 import "package:miria/const.dart";
 import "package:miria/model/general_settings.dart";
 import "package:miria/providers.dart";
+import "package:miria/util/cache_size.dart";
 import "package:miria/view/themes/built_in_color_themes.dart";
 
 @RoutePage()
@@ -39,6 +40,7 @@ class GeneralSettingsPage extends HookConsumerWidget {
     final fantasyFontName = useState(settings.fantasyFontName);
     final language = useState(settings.languages);
     final isDeckMode = useState(settings.isDeckMode);
+    final cacheSize = useState<String>("");
 
     useMemoized(() {
       if (lightModeTheme.value.isEmpty) {
@@ -108,6 +110,13 @@ class GeneralSettingsPage extends HookConsumerWidget {
     );
 
     useMemoized(() => unawaited(save()), dependencies);
+
+    useEffect(() {
+      unawaited(getCacheSizeWithUnit().then((value) =>
+        cacheSize.value = value,
+      ),);
+      return null;
+    }, [], );
 
     return Scaffold(
       appBar: AppBar(title: Text(S.of(context).generalSettings)),
@@ -482,6 +491,33 @@ class GeneralSettingsPage extends HookConsumerWidget {
                         isExpanded: true,
                         onChanged: (item) =>
                             fantasyFontName.value = item?.actualName ?? "",
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(15),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        S.of(context).cache,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      ListTile(
+                        title: Text(cacheSize.value),
+                        trailing: ElevatedButton(
+                          onPressed: () async {
+                            await clearCache().then((value) => 
+                              cacheSize.value = value,
+                            );
+                          },
+                          child: Text(S.of(context).clearCache),
+                        ),
                       ),
                     ],
                   ),
