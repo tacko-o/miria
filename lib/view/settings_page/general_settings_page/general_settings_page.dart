@@ -1,4 +1,5 @@
 import "dart:async";
+import "dart:io";
 
 import "package:auto_route/auto_route.dart";
 import "package:collection/collection.dart";
@@ -111,13 +112,17 @@ class GeneralSettingsPage extends HookConsumerWidget {
 
     useMemoized(() => unawaited(save()), dependencies);
 
+    // キャッシュサイズ表示
+    final getCacheSize = useMemoized(() => (){
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        cacheSize.value = await getCacheSizeWithUnit();
+      });
+    },);
     useEffect(() {
-      unawaited(getCacheSizeWithUnit().then((value) =>
-        cacheSize.value = value,
-      ),);
+      getCacheSize();
       return null;
-    }, [], );
-
+    }, [],);
+  
     return Scaffold(
       appBar: AppBar(title: Text(S.of(context).generalSettings)),
       body: SingleChildScrollView(
@@ -509,13 +514,19 @@ class GeneralSettingsPage extends HookConsumerWidget {
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       ListTile(
-                        title: Text(cacheSize.value),
+                        title: (cacheSize.value != "")
+                              ? Text(cacheSize.value)
+                              : const Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [CircularProgressIndicator()],
+                                ),
                         trailing: ElevatedButton(
-                          onPressed: () async {
-                            await clearCache().then((value) => 
-                              cacheSize.value = value,
-                            );
-                          },
+                          onPressed: (cacheSize.value != "")
+                              ? () async {
+                                cacheSize.value = "";
+                                cacheSize.value = await clearCache();
+                              }
+                              : null,
                           child: Text(S.of(context).clearCache),
                         ),
                       ),
